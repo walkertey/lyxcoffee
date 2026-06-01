@@ -1,0 +1,187 @@
+/* App-level CSS Variables */
+:root {
+  /* Brand Colors */
+  --color-brand-red: #A91616;
+  --color-brand-red-dark: #7F1010;
+  --color-brand-gold: #C99A34;
+  --color-brand-cream: #FFEFD1;
+  
+  /* Functional Colors */
+  --color-whatsapp: #118C43;
+  --color-whatsapp-dark: #0F6F37;
+  
+  /* Surface Colors */
+  --color-surface-primary: #FFFDF8;
+  --color-surface-secondary: #FFF6E8;
+  
+  /* Text Colors */
+  --color-text-primary: #25130F;
+  --color-text-secondary: #80685B;
+  
+  /* Border & Divider */
+  --color-border-light: rgba(95, 48, 35, 0.14);
+
+  /* Border Radius System */
+  --radius-xs: 14px;           /* Small inputs, buttons */
+  --radius-sm: 16px;           /* Medium buttons */
+  --radius-md: 18px;           /* Segmented controls */
+  --radius-lg: 22px;           /* Menu items, cards */
+  --radius-xl: 24px;           /* Large cards */
+  --radius-2xl: 26px;          /* Menu group cards */
+  --radius-3xl: 28px;          /* Extra large cards */
+  --radius-hero: 30px;         /* Hero banners */
+  --radius-full: 9999px;       /* Circular */
+  --radius-card: 24px;         /* Legacy alias */
+
+  /* Shadow System - Subtle & Functional */
+  --shadow-subtle: 0 8px 18px rgba(64, 32, 20, 0.08);     /* Delicate shadows */
+  --shadow-soft: 0 10px 30px rgba(76, 34, 20, 0.07);      /* Soft shadows (legacy) */
+  --shadow-card: 0 10px 20px rgba(169, 22, 22, 0.18);    /* Card shadow */
+  
+  /* Shadow System - Brand & Interactive */
+  --shadow-brand-light: 0 8px 18px rgba(169, 22, 22, 0.20);   /* Light brand */
+  --shadow-brand: 0 10px 22px rgba(169, 22, 22, 0.22);        /* Standard brand */
+  --shadow-brand-heavy: 0 12px 24px rgba(169, 22, 22, 0.24);  /* Heavy brand */
+  
+  /* Shadow System - Special */
+  --shadow-whatsapp: 0 12px 24px rgba(17, 140, 67, 0.22);     /* WhatsApp green */
+  --shadow-elevated: 0 14px 32px rgba(76, 34, 20, 0.10);      /* Elevated elements */
+  --shadow-strong: 0 16px 40px rgba(51, 20, 12, 0.22);        /* Strong/heavy */
+  --shadow-focus: 0 0 0 4px rgba(169, 22, 22, 0.08);          /* Focus ring */
+  --shadow: 0 12px 36px rgba(76, 34, 20, 0.12);               /* Default shadow */
+
+  /* Validation Colors & States */
+  --color-error: #DC2626;              /* Error/invalid state */
+  --color-error-bg: #FEE2E2;           /* Error background */
+  --color-error-border: rgba(220, 38, 38, 0.24);  /* Error border */
+  --color-success: #10B981;            /* Success state */
+  --color-success-bg: #D1FAE5;         /* Success background */
+  --color-success-border: rgba(16, 185, 129, 0.24); /* Success border */
+  --color-warning: #F59E0B;            /* Warning state */
+  --color-warning-bg: #FEF3C7;         /* Warning background */
+  
+  /* Validation Shadows */
+  --shadow-error: 0 0 0 3px rgba(220, 38, 38, 0.08);   /* Error focus ring */
+  --shadow-success: 0 0 0 3px rgba(16, 185, 129, 0.08); /* Success focus ring */
+
+  /* Toast Notifications */
+  --toast-duration: 1700ms;        /* Display duration */
+  --toast-animation-in: toastSlideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  --toast-animation-out: toastSlideDown 0.3s cubic-bezier(0.4, 0, 1, 1);
+  --toast-bg-default: rgba(42, 23, 18, 0.94);  /* Default dark background */
+  --toast-bg-success: rgba(16, 185, 129, 0.92); /* Success green */
+  --toast-bg-error: rgba(220, 38, 38, 0.92);    /* Error red */
+  --toast-bg-info: rgba(59, 130, 246, 0.92);    /* Info blue */
+
+  /* Legacy Aliases for Compatibility */
+  --bg: var(--color-surface-secondary);
+  --paper: var(--color-surface-primary);
+  --ink: var(--color-text-primary);
+  --muted: var(--color-text-secondary);
+  --red: var(--color-brand-red);
+  --red-dark: var(--color-brand-red-dark);
+  --gold: var(--color-brand-gold);
+  --whatsapp: var(--color-whatsapp);
+  --green2: var(--color-whatsapp-dark);
+  --cream: var(--color-brand-cream);
+  --line: var(--color-border-light);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --topbar-h: 74px;
+  --cartbar-h: 76px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --topbar-h: 82px;
+  }
+}
+
+/* Body Background */
+body {
+  background-image:
+    radial-gradient(circle at 10% -8%, rgba(201,154,52,0.20), transparent 30rem),
+    radial-gradient(circle at 100% 14%, rgba(169,22,22,0.12), transparent 32rem),
+    linear-gradient(180deg, #fff7ec 0%, #fff6e8 48%, #fffdf8 100%);
+  background-attachment: fixed, scroll, scroll, scroll;
+}
+
+/* Hero Background Classes */
+.hero-home {
+  background-image: linear-gradient(145deg, rgba(178,29,29,0.72) 0%, rgba(120,16,16,0.62) 58%, rgba(64,18,13,0.80) 100%), url('/assets/hero-kopitiam.webp'), linear-gradient(145deg, #b21d1d 0%, #781010 58%, #40120d 100%);
+}
+
+.hero-drinks {
+  background-image: linear-gradient(135deg, rgba(75,36,23,0.64) 0%, rgba(157,28,28,0.54) 50%, rgba(225,182,80,0.48) 100%), url('/assets/drinks-counter.webp'), linear-gradient(135deg, #4b2417 0%, #9d1c1c 50%, #e1b650 100%);
+}
+
+.hero-noodles {
+  background-image: linear-gradient(135deg, rgba(61,33,24,0.66) 0%, rgba(127,16,16,0.54) 48%, rgba(201,154,52,0.46) 100%), url('/assets/noodles.webp'), linear-gradient(135deg, #3d2118 0%, #7f1010 48%, #c99a34 100%);
+}
+
+.hero-wok {
+  background-image: linear-gradient(135deg, rgba(53,23,15,0.68) 0%, rgba(143,23,23,0.56) 48%, rgba(200,123,46,0.48) 100%), url('/assets/wok-cooking.webp'), linear-gradient(135deg, #35170f 0%, #8f1717 48%, #c87b2e 100%);
+}
+
+.hero-cheecheongfun {
+  background-image: linear-gradient(135deg, rgba(74,32,21,0.66) 0%, rgba(169,22,22,0.54) 46%, rgba(237,208,141,0.48) 100%), url('/assets/chee-cheong-fun.webp'), linear-gradient(135deg, #4a2015 0%, #a91616 46%, #edd08d 100%);
+}
+
+.hero-about {
+  background-image: linear-gradient(135deg, rgba(59,36,25,0.68) 0%, rgba(111,42,25,0.56) 48%, rgba(201,154,52,0.48) 100%), url('/assets/shop-front.webp'), linear-gradient(135deg, #3b2419 0%, #6f2a19 48%, #c99a34 100%);
+}
+
+.promo-kopitiam {
+  background-image: linear-gradient(90deg,rgba(37,19,15,0.78),rgba(37,19,15,0.42)), url('/assets/shop-front.webp'), linear-gradient(135deg,rgba(169,22,22,0.96) 0%,rgba(127,16,16,0.88) 54%,rgba(201,154,52,0.72) 100%);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes toastSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes toastSlideDown {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+@keyframes toastBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* Toast Animation Classes */
+.toast-slide-up {
+  animation: toastSlideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.toast-slide-down {
+  animation: toastSlideDown 0.3s cubic-bezier(0.4, 0, 1, 1) forwards;
+}

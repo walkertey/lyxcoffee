@@ -13,7 +13,7 @@ export function ImageHeroBanner({ kicker, title, description, bgClass, children,
   return (
     <div
       className={`
-        relative overflow-hidden rounded-[30px] border border-white/40 shadow-[var(--shadow-soft)] isolate
+        relative overflow-hidden rounded-[var(--radius-hero)] border border-white/40 shadow-[var(--shadow-soft)] isolate
         bg-[#4b2b1d] bg-cover bg-center bg-no-repeat
         ${isHome ? "min-h-[390px] md:min-h-[500px] lg:min-h-[540px] px-6 py-6 md:px-[52px] md:py-[52px]" : "min-h-[282px] md:min-h-[360px] px-4 py-[22px] md:px-8 md:py-9"}
         ${isHome ? "flex items-center" : "flex items-end"}
@@ -26,7 +26,7 @@ export function ImageHeroBanner({ kicker, title, description, bgClass, children,
       <div className="absolute inset-0 bg-gradient-to-b from-[rgba(0,0,0,0.04)] to-[rgba(0,0,0,0.34)] z-0" />
 
       {/* Inner Border */}
-      <div className="absolute inset-[14px] border border-[rgba(255,246,232,0.20)] rounded-[calc(30px-10px)] pointer-events-none z-0" />
+      <div className="absolute inset-[14px] border border-[rgba(255,246,232,0.20)] rounded-[calc(var(--radius-hero)-10px)] pointer-events-none z-0" />
 
       {/* Content */}
       <div className="relative z-10 max-w-[720px] text-[#fff8eb]">

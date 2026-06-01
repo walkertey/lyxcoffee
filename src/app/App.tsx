@@ -46,7 +46,8 @@ export default function App() {
   const [lastOrderId, setLastOrderId] = useState("");
   const [sentMap, setSentMap] = useState<Record<string, boolean>>({});
   const [openedMap, setOpenedMap] = useState<Record<string, boolean>>({});
-  const [toast, setToast] = useState({ show: false, message: "" });
+  const [toast, setToast] = useState({ show: false, message: "", type: "default" as "default" | "success" | "error" | "info", duration: 1700 });
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // 加载初始数据
   useEffect(() => {
@@ -66,8 +67,8 @@ export default function App() {
     saveOrderState({ lastOrderId, sentMap });
   }, [lastOrderId, sentMap]);
 
-  const showToast = useCallback((message: string) => {
-    setToast({ show: true, message });
+  const showToast = useCallback((message: string, type: "default" | "success" | "error" | "info" = "default", duration: number = 1700) => {
+    setToast({ show: true, message, type, duration });
   }, []);
 
   const hideToast = useCallback(() => {
@@ -100,7 +101,7 @@ export default function App() {
     if (item) {
       const variant = item.variants?.find(v => v.id === variantId);
       const variantLabel = variant?.label || "";
-      showToast(`${item.name}${variantLabel ? " · " + variantLabel : ""} 已加入购物车`);
+      showToast(`${item.name}${variantLabel ? " · " + variantLabel : ""} 已加入购物车`, "success");
     }
   }, [cart, resetOrderProgress, showToast]);
 
@@ -117,12 +118,26 @@ export default function App() {
   const handleCustomerNameChange = useCallback((value: string) => {
     resetOrderProgress();
     setCustomerName(value);
-  }, [resetOrderProgress]);
+    if (fieldErrors.customerName) {
+      setFieldErrors(prev => {
+        const updated = { ...prev };
+        delete updated.customerName;
+        return updated;
+      });
+    }
+  }, [resetOrderProgress, fieldErrors.customerName]);
 
   const handleCustomerPhoneChange = useCallback((value: string) => {
     resetOrderProgress();
     setCustomerPhone(value);
-  }, [resetOrderProgress]);
+    if (fieldErrors.customerPhone) {
+      setFieldErrors(prev => {
+        const updated = { ...prev };
+        delete updated.customerPhone;
+        return updated;
+      });
+    }
+  }, [resetOrderProgress, fieldErrors.customerPhone]);
 
   const handleOrderTypeChange = useCallback((value: string) => {
     resetOrderProgress();
@@ -135,24 +150,33 @@ export default function App() {
   }, [resetOrderProgress]);
 
   const validateCustomer = useCallback((): boolean => {
+    const errors: Record<string, string> = {};
+
     if (!customerName.trim()) {
-      showToast("请填写顾客姓名");
-      return false;
+      errors.customerName = "请填写顾客姓名";
     }
 
     const normalizedPhone = normalizeMalaysianMobile(customerPhone);
-    if (!normalizedPhone) {
-      showToast("请填写联络电话");
-      return false;
+    if (!normalizedPhone && !customerPhone.trim()) {
+      errors.customerPhone = "请填写联络电话";
+    } else if (customerPhone.trim() && !isValidMalaysianMobile(normalizedPhone)) {
+      errors.customerPhone = "电话格式不正确，例如 012-3456789";
     }
 
-    if (!isValidMalaysianMobile(normalizedPhone)) {
-      showToast("电话格式不正确，请填写马来西亚手机号码，例如 012-3456789");
+    setFieldErrors(errors);
+    
+    if (Object.keys(errors).length > 0) {
+      const firstError = Object.values(errors)[0];
+      showToast(firstError, "error");
       return false;
     }
 
     return true;
   }, [customerName, customerPhone, showToast]);
+
+  const isFormValid = useMemo(() => {
+    return customerName.trim() !== "" && normalizeMalaysianMobile(customerPhone) !== "";
+  }, [customerName, customerPhone]);
 
   const normalizedCustomerPhone = normalizeMalaysianMobile(customerPhone);
   const customerInfo = useMemo<CustomerInfo>(() => ({
@@ -179,7 +203,7 @@ export default function App() {
 
   const handleGenerateOrder = useCallback(() => {
     if (cart.length === 0) {
-      showToast("购物车是空的");
+      showToast("购物车是空的", "info");
       return;
     }
 
@@ -189,7 +213,7 @@ export default function App() {
     if (currentCart.length !== cart.length) {
       resetOrderProgress();
       setCart(currentCart);
-      showToast("购物车中有已失效商品，已自动移除");
+      showToast("购物车中有已失效商品，已自动移除", "info");
       return;
     }
 
@@ -213,7 +237,7 @@ export default function App() {
     const orderText = buildCustomerOrder(lastOrderId, cart, customerInfo);
 
     copyText(orderText)
-      .then(() => showToast("顾客总订单已复制"))
+      .then(() => showToast("顾客总订单已复制", "success"))
       .catch(() => showToast("复制失败，请长按文字手动复制"));
   }, [cart, customerInfo, lastOrderId, showToast]);
 
@@ -221,7 +245,7 @@ export default function App() {
     const orderText = buildVendorOrder(lastOrderId, cart, customerInfo, vendorId);
 
     copyText(orderText)
-      .then(() => showToast(`${vendors[vendorId].name}分单已复制`))
+      .then(() => showToast(`${vendors[vendorId].name}分单已复制`, "success"))
       .catch(() => showToast("复制失败，请长按文字手动复制"));
   }, [cart, customerInfo, lastOrderId, showToast]);
 
@@ -231,7 +255,7 @@ export default function App() {
 
   const handleMarkSent = useCallback((vendorId: VendorId) => {
     if (!openedMap[vendorId]) {
-      showToast(`请先打开${vendors[vendorId].name} WhatsApp`);
+      showToast(`请先打开${vendors[vendorId].name} WhatsApp`, "info");
       return;
     }
 
@@ -252,57 +276,13 @@ export default function App() {
     setSentMap({});
     setOpenedMap({});
     clearOrderState();
-    showToast("订单已完成，购物车已清空");
+    showToast("订单已完成，购物车已清空", "success");
     navigate("home");
   }, [cart.length, pendingVendorNames, navigate, showToast]);
 
   return (
     <div className="min-h-screen pb-[calc(var(--cartbar-h,76px)+24px+var(--safe-bottom))] md:pb-[calc(var(--cartbar-h,76px)+28px)]">
-      <style>{`
-        :root {
-          --bg: #FFF6E8;
-          --paper: #FFFDF8;
-          --ink: #25130F;
-          --muted: #80685B;
-          --red: #A91616;
-          --red-dark: #7F1010;
-          --gold: #C99A34;
-          --whatsapp: #118C43;
-          --green2: #0F6F37;
-          --cream: #FFEFD1;
-          --line: rgba(95, 48, 35, 0.14);
-          --shadow-soft: 0 12px 36px rgba(76, 34, 20, 0.12);
-          --shadow-card: 0 8px 22px rgba(76, 34, 20, 0.09);
-          --safe-bottom: env(safe-area-inset-bottom, 0px);
-          --topbar-h: 74px;
-          --cartbar-h: 76px;
-          --radius-card: 24px;
-        }
-
-        @media (min-width: 768px) {
-          :root {
-            --topbar-h: 82px;
-          }
-        }
-
-        body {
-          background-image:
-            radial-gradient(circle at 10% -8%, rgba(201,154,52,0.20), transparent 30rem),
-            radial-gradient(circle at 100% 14%, rgba(169,22,22,0.12), transparent 32rem),
-            linear-gradient(180deg, #fff7ec 0%, #fff6e8 48%, #fffdf8 100%);
-          background-attachment: fixed, scroll, scroll, scroll;
-        }
-
-        /* Drop real images into public/assets with these filenames.
-           If an image is missing, the gradient fallback still renders and build stays green. */
-        .hero-home { background-image: linear-gradient(145deg, rgba(178,29,29,0.72) 0%, rgba(120,16,16,0.62) 58%, rgba(64,18,13,0.80) 100%), url('/assets/hero-kopitiam.webp'), linear-gradient(145deg, #b21d1d 0%, #781010 58%, #40120d 100%); }
-        .hero-drinks { background-image: linear-gradient(135deg, rgba(75,36,23,0.64) 0%, rgba(157,28,28,0.54) 50%, rgba(225,182,80,0.48) 100%), url('/assets/drinks-counter.webp'), linear-gradient(135deg, #4b2417 0%, #9d1c1c 50%, #e1b650 100%); }
-        .hero-noodles { background-image: linear-gradient(135deg, rgba(61,33,24,0.66) 0%, rgba(127,16,16,0.54) 48%, rgba(201,154,52,0.46) 100%), url('/assets/noodles.webp'), linear-gradient(135deg, #3d2118 0%, #7f1010 48%, #c99a34 100%); }
-        .hero-wok { background-image: linear-gradient(135deg, rgba(53,23,15,0.68) 0%, rgba(143,23,23,0.56) 48%, rgba(200,123,46,0.48) 100%), url('/assets/wok-cooking.webp'), linear-gradient(135deg, #35170f 0%, #8f1717 48%, #c87b2e 100%); }
-        .hero-cheecheongfun { background-image: linear-gradient(135deg, rgba(74,32,21,0.66) 0%, rgba(169,22,22,0.54) 46%, rgba(237,208,141,0.48) 100%), url('/assets/chee-cheong-fun.webp'), linear-gradient(135deg, #4a2015 0%, #a91616 46%, #edd08d 100%); }
-        .hero-about { background-image: linear-gradient(135deg, rgba(59,36,25,0.68) 0%, rgba(111,42,25,0.56) 48%, rgba(201,154,52,0.48) 100%), url('/assets/shop-front.webp'), linear-gradient(135deg, #3b2419 0%, #6f2a19 48%, #c99a34 100%); }
-        .promo-kopitiam { background-image: linear-gradient(90deg,rgba(37,19,15,0.78),rgba(37,19,15,0.42)), url('/assets/shop-front.webp'), linear-gradient(135deg,rgba(169,22,22,0.96)_0%,rgba(127,16,16,0.88)_54%,rgba(201,154,52,0.72)_100%); }
-      `}</style>
+      {/* Styles have been migrated to src/styles/app.css */}
 
       <TopNavigation
         activeSection={activeSection}
@@ -317,32 +297,32 @@ export default function App() {
             <ImageHeroBanner
               kicker="Bukit Siput · Segamat · 四档口 WhatsApp 点餐"
               title="龍運轩咖啡店"
-              description="一碗热面，一杯好茶，一份现点现做的本地味道。顾客看到同一张总订单，系统会自动按水档、面档、煮炒、广西卷肠粉分开整理成档口分单。"
+              description="一碗热面，一杯好茶，一份现点现做的本地味道。选好档口，点餐后直接发 WhatsApp 给我们。"
               bgClass="hero-home"
               isHome
             >
               <div className="w-full max-w-[780px] grid grid-cols-1 md:grid-cols-4 gap-2.5 mt-6 items-stretch">
                 <button
                   onClick={() => navigate("drinks")}
-                  className="min-h-[48px] rounded-2xl px-4 py-3 bg-[#FFEFD1] text-[#7F1010] font-extrabold shadow-[0_12px_26px_rgba(34,10,6,0.18)] active:scale-95 transition-transform"
+                  className="min-h-[48px] rounded-[var(--radius-lg)] px-4 py-3 bg-[#FFEFD1] text-[#7F1010] font-extrabold shadow-[var(--shadow-strong)] active:scale-95 transition-transform"
                 >
                   水档菜单
                 </button>
                 <button
                   onClick={() => navigate("noodles")}
-                  className="min-h-[48px] rounded-2xl px-4 py-3 bg-[#FFEFD1] text-[#7F1010] font-extrabold shadow-[0_12px_26px_rgba(34,10,6,0.18)] active:scale-95 transition-transform"
+                  className="min-h-[48px] rounded-[var(--radius-lg)] px-4 py-3 bg-[#FFEFD1] text-[#7F1010] font-extrabold shadow-[var(--shadow-strong)] active:scale-95 transition-transform"
                 >
                   面档菜单
                 </button>
                 <button
                   onClick={() => navigate("wok")}
-                  className="min-h-[48px] rounded-2xl px-4 py-3 bg-[#FFEFD1] text-[#7F1010] font-extrabold shadow-[0_12px_26px_rgba(34,10,6,0.18)] active:scale-95 transition-transform"
+                  className="min-h-[48px] rounded-[var(--radius-lg)] px-4 py-3 bg-[#FFEFD1] text-[#7F1010] font-extrabold shadow-[var(--shadow-strong)] active:scale-95 transition-transform"
                 >
                   煮炒菜单
                 </button>
                 <button
                   onClick={() => navigate("cheecheongfun")}
-                  className="min-h-[48px] rounded-2xl px-4 py-3 bg-[#FFEFD1] text-[#7F1010] font-extrabold shadow-[0_12px_26px_rgba(34,10,6,0.18)] active:scale-95 transition-transform"
+                  className="min-h-[48px] rounded-[var(--radius-lg)] px-4 py-3 bg-[#FFEFD1] text-[#7F1010] font-extrabold shadow-[var(--shadow-strong)] active:scale-95 transition-transform"
                 >
                   卷肠粉
                 </button>
@@ -352,31 +332,31 @@ export default function App() {
             <div className="grid grid-cols-1 md:grid-cols-5 lg:grid-cols-5 gap-3 mt-[18px]">
               <VendorCategoryCard
                 title="水档菜单"
-                description="饮品有小、大、冰规格，点击规格即可加入购物车。"
+                description="咖啡、奶茶、冰饮，选规格即加入。"
                 mark="水"
                 onClick={() => navigate("drinks")}
               />
               <VendorCategoryCard
                 title="面档菜单"
-                description="云吞面与面薄可选小 / 中 / 大，云吞单价加入。"
+                description="云吞面、面薄，选大小即加入。"
                 mark="面"
                 onClick={() => navigate("noodles")}
               />
               <VendorCategoryCard
                 title="煮炒菜单"
-                description="饭类、粉面类、粥品，适合午餐和打包。"
+                description="饭、粉、粥，点击加入购物车。"
                 mark="炒"
                 onClick={() => navigate("wok")}
               />
               <VendorCategoryCard
                 title="广西卷肠粉"
-                description="素粉、菜粉、加肉、全家福和加鸡蛋。"
+                description="素、菜、加肉、全家福，点击加入。"
                 mark="粉"
                 onClick={() => navigate("cheecheongfun")}
               />
               <VendorCategoryCard
                 title="本地介绍"
-                description="店铺说明、营业时间、地址、Facebook 与导航。"
+                description="营业时间、地址与导航。"
                 mark="介"
                 onClick={() => navigate("about")}
               />
@@ -395,8 +375,8 @@ export default function App() {
               description="咖啡、奶茶、冰饮、鸡蛋与烤面包。饮品请直接选择小 / 大 / 冰规格加入购物车。"
               bgClass="hero-drinks"
             />
-            <div className="my-[14px] rounded-[22px] px-4 py-3.5 bg-[linear-gradient(135deg,rgba(169,22,22,0.08),rgba(201,154,52,0.10)),var(--paper)] border border-[var(--line)] text-[#80685B] leading-relaxed">
-              此页面商品会归入【水档】分单。顾客最后仍然看到同一张总订单。
+            <div className="my-[14px] rounded-[var(--radius-lg)] px-4 py-3.5 bg-[linear-gradient(135deg,rgba(169,22,22,0.08),rgba(201,154,52,0.10)),var(--paper)] border border-[var(--line)] text-[#80685B] leading-relaxed">
+              此页商品归入【水档】分单。
             </div>
             {menuGroups
               .filter(g => g.mount === "drinksMenu")
@@ -419,8 +399,8 @@ export default function App() {
               description="干捞云吞面、云吞面汤、面薄汤、素面与云吞。熟悉的本地早市味道。"
               bgClass="hero-noodles"
             />
-            <div className="my-[14px] rounded-[22px] px-4 py-3.5 bg-[linear-gradient(135deg,rgba(169,22,22,0.08),rgba(201,154,52,0.10)),var(--paper)] border border-[var(--line)] text-[#80685B] leading-relaxed">
-              此页面商品会归入【面档】分单。可在购物车里给每项填写备注，例如不要葱、多酱。
+            <div className="my-[14px] rounded-[var(--radius-lg)] px-4 py-3.5 bg-[linear-gradient(135deg,rgba(169,22,22,0.08),rgba(201,154,52,0.10)),var(--paper)] border border-[var(--line)] text-[#80685B] leading-relaxed">
+              此页商品归入【面档】分单。可在购物车为每项加备注。
             </div>
             {menuGroups
               .filter(g => g.mount === "noodlesMenu")
@@ -443,8 +423,8 @@ export default function App() {
               description="饭类、粉面、粥品现点现做，适合午餐、打包和简单吃一餐。"
               bgClass="hero-wok"
             />
-            <div className="my-[14px] rounded-[22px] px-4 py-3.5 bg-[linear-gradient(135deg,rgba(169,22,22,0.08),rgba(201,154,52,0.10)),var(--paper)] border border-[var(--line)] text-[#80685B] leading-relaxed">
-              此页面商品会归入【如月小吃 / 煮炒档】分单。
+            <div className="my-[14px] rounded-[var(--radius-lg)] px-4 py-3.5 bg-[linear-gradient(135deg,rgba(169,22,22,0.08),rgba(201,154,52,0.10)),var(--paper)] border border-[var(--line)] text-[#80685B] leading-relaxed">
+              此页商品归入【如月小吃 / 煮炒档】分单。
             </div>
             {menuGroups
               .filter(g => g.mount === "wokMenu")
@@ -467,8 +447,8 @@ export default function App() {
               description="可选素粉、菜粉、菜加肉、全肉、全家福，也可额外加鸡蛋。"
               bgClass="hero-cheecheongfun"
             />
-            <div className="my-[14px] rounded-[22px] px-4 py-3.5 bg-[linear-gradient(135deg,rgba(169,22,22,0.08),rgba(201,154,52,0.10)),var(--paper)] border border-[var(--line)] text-[#80685B] leading-relaxed">
-              此页面商品会归入【广西卷肠粉档】分单。
+            <div className="my-[14px] rounded-[var(--radius-lg)] px-4 py-3.5 bg-[linear-gradient(135deg,rgba(169,22,22,0.08),rgba(201,154,52,0.10)),var(--paper)] border border-[var(--line)] text-[#80685B] leading-relaxed">
+              此页商品归入【广西卷肠粉档】分单。
             </div>
             {menuGroups
               .filter(g => g.mount === "cheecheongfunMenu")
@@ -492,9 +472,9 @@ export default function App() {
               bgClass="hero-about"
             />
 
-            <div className="my-4 rounded-[28px] bg-[var(--paper)] border border-[var(--line)] shadow-[var(--shadow-card)] overflow-hidden p-4">
+            <div className="my-4 rounded-[var(--radius-3xl)] bg-[var(--paper)] border border-[var(--line)] shadow-[var(--shadow-card)] overflow-hidden p-4">
               <div className="grid md:grid-cols-3 lg:grid-cols-3 gap-3">
-                <div className="rounded-[22px] p-4 bg-[var(--paper)] border border-[var(--line)] shadow-[var(--shadow-card)]">
+                <div className="rounded-[var(--radius-lg)] p-4 bg-[var(--paper)] border border-[var(--line)] shadow-[var(--shadow-card)]">
                   <h3 className="m-0 mb-2 text-[#7F1010] text-[17px] font-black">营业时间</h3>
                   <ul className="m-0 p-0 list-none grid gap-1.5 text-[#80685B] text-sm leading-relaxed">
                     {[
@@ -514,7 +494,7 @@ export default function App() {
                   </ul>
                 </div>
 
-                <div className="rounded-[22px] p-4 bg-[var(--paper)] border border-[var(--line)] shadow-[var(--shadow-card)]">
+                <div className="rounded-[var(--radius-lg)] p-4 bg-[var(--paper)] border border-[var(--line)] shadow-[var(--shadow-card)]">
                   <h3 className="m-0 mb-2 text-[#7F1010] text-[17px] font-black">地址</h3>
                   <p className="m-0 text-[#80685B] leading-[1.7] text-sm">
                     LOT 2891 BWH, JALAN SULTAN BUKIT SIPUT,<br />
@@ -525,13 +505,13 @@ export default function App() {
                     href="https://www.google.com/maps/search/?api=1&query=LOT%202891%20BWH%20JALAN%20SULTAN%20BUKIT%20SIPUT%20Segamat%20Malaysia%2085020"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block min-h-[48px] rounded-2xl px-4 py-3 bg-[rgba(255,253,248,0.55)] border border-[var(--line)] text-[#7F1010] font-extrabold text-center active:scale-95 transition-transform"
+                    className="block min-h-[48px] rounded-[var(--radius-lg)] px-4 py-3 bg-[rgba(255,253,248,0.55)] border border-[var(--line)] text-[#7F1010] font-extrabold text-center active:scale-95 transition-transform"
                   >
                     Google Maps 导航
                   </a>
                 </div>
 
-                <div className="rounded-[22px] p-4 bg-[var(--paper)] border border-[var(--line)] shadow-[var(--shadow-card)]">
+                <div className="rounded-[var(--radius-lg)] p-4 bg-[var(--paper)] border border-[var(--line)] shadow-[var(--shadow-card)]">
                   <h3 className="m-0 mb-2 text-[#7F1010] text-[17px] font-black">Facebook</h3>
                   <p className="m-0 text-[#80685B] leading-[1.7] text-sm">
                     <span lang="ms">KEDAI KOPI B.Siput</span> 龍運轩
@@ -541,7 +521,7 @@ export default function App() {
                     href={FACEBOOK_URL}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block min-h-[48px] rounded-2xl px-4 py-3 bg-[rgba(255,253,248,0.55)] border border-[var(--line)] text-[#7F1010] font-extrabold text-center active:scale-95 transition-transform mb-3"
+                    className="block min-h-[48px] rounded-[var(--radius-lg)] px-4 py-3 bg-[rgba(255,253,248,0.55)] border border-[var(--line)] text-[#7F1010] font-extrabold text-center active:scale-95 transition-transform mb-3"
                   >
                     打开官方 Facebook 页面
                   </a>
@@ -549,7 +529,7 @@ export default function App() {
                     href={buildWhatsAppUrl("601161379373", "你好，我想询问龍運轩咖啡店点餐。")}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block min-h-[48px] rounded-2xl px-4 py-3 bg-gradient-to-br from-[#118C43] to-[#0F6F37] text-white font-extrabold text-center shadow-[0_12px_24px_rgba(17,140,67,0.22)] active:scale-95 transition-transform"
+                    className="block min-h-[48px] rounded-[var(--radius-lg)] px-4 py-3 bg-gradient-to-br from-[var(--color-whatsapp)] to-[var(--color-whatsapp-dark)] text-white font-extrabold text-center shadow-[var(--shadow-whatsapp)] active:scale-95 transition-transform"
                   >
                     WhatsApp 联系 / 下单
                   </a>
@@ -564,14 +544,14 @@ export default function App() {
           <section className="px-3.5 pt-5 md:px-5 md:pt-7 lg:px-[30px] animate-[fadeIn_0.22s_ease]">
             <div className="mb-3.5">
               <h2 className="m-0 text-[clamp(24px,7vw,44px)] leading-tight tracking-tight text-[#7F1010] font-black">
-                购物车
+                检查订单
               </h2>
               <p className="mt-2 mb-0 text-[#80685B] leading-[1.68] text-sm max-w-[720px]">
-                这是一张顾客总订单，系统会按四个档口自动分组。每个档口会生成独立分单。
+                确认无误后，系统会按档口生成 WhatsApp 分单。
               </p>
             </div>
 
-            <div className="rounded-[28px] bg-[var(--paper)] border border-[var(--line)] shadow-[var(--shadow-card)] overflow-hidden">
+            <div className="rounded-[var(--radius-3xl)] bg-[var(--paper)] border border-[var(--line)] shadow-[var(--shadow-card)] overflow-hidden">
               {cart.length === 0 ? (
                 <div className="py-[34px] px-[18px] text-center text-[#80685B] leading-[1.7]">
                   购物车是空的。<br />
@@ -609,34 +589,64 @@ export default function App() {
             </div>
 
             {cart.length > 0 && (
-              <div className="mt-4 rounded-[28px] bg-[var(--paper)] border border-[var(--line)] shadow-[var(--shadow-card)] p-4">
+              <div className="mt-4 rounded-[var(--radius-3xl)] bg-[var(--paper)] border border-[var(--line)] shadow-[var(--shadow-card)] p-4">
                 <h3 className="m-0 mb-3 text-[#7F1010] font-black">订单资料</h3>
 
                 <div className="grid md:grid-cols-2 gap-3">
                   <label>
-                    <span className="block text-xs font-extrabold text-[#7F1010] mb-1.5">顾客姓名</span>
-                    <input
-                      value={customerName}
-                      onChange={(e) => handleCustomerNameChange(e.target.value)}
-                      maxLength={40}
-                      className="w-full min-h-[48px] rounded-2xl px-3.5 py-3 border border-[var(--line)] outline-none bg-[var(--paper)] text-[var(--ink)] focus:border-[rgba(169,22,22,0.42)] focus:shadow-[0_0_0_4px_rgba(169,22,22,0.08)]"
-                      placeholder="例如：Ah Ming"
-                      autoComplete="name"
-                    />
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <span className="block text-xs font-extrabold text-[#7F1010]">顾客姓名</span>
+                      <span className="text-[#DC2626] font-extrabold">*</span>
+                    </div>
+                    <div className="relative">
+                      <input
+                        value={customerName}
+                        onChange={(e) => handleCustomerNameChange(e.target.value)}
+                        maxLength={40}
+                        className={`w-full min-h-[48px] rounded-[var(--radius-lg)] px-3.5 py-3 border outline-none bg-[var(--paper)] text-[var(--ink)] transition-all ${
+                          fieldErrors.customerName
+                            ? "border-[var(--color-error)] focus:border-[var(--color-error)] focus:shadow-[var(--shadow-error)] bg-[#FEF2F2]"
+                            : "border-[var(--line)] focus:border-[rgba(169,22,22,0.42)] focus:shadow-[var(--shadow-focus)]"
+                        }`}
+                        placeholder="例如：Ah Ming"
+                        autoComplete="name"
+                      />
+                      {fieldErrors.customerName && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[#DC2626] text-lg font-extrabold">⚠</div>
+                      )}
+                    </div>
+                    {fieldErrors.customerName && (
+                      <p className="mt-1 text-[#DC2626] text-xs font-extrabold">{fieldErrors.customerName}</p>
+                    )}
                   </label>
 
                   <label>
-                    <span className="block text-xs font-extrabold text-[#7F1010] mb-1.5">电话</span>
-                    <input
-                      value={customerPhone}
-                      onChange={(e) => handleCustomerPhoneChange(e.target.value)}
-                      type="tel"
-                      maxLength={15}
-                      className="w-full min-h-[48px] rounded-2xl px-3.5 py-3 border border-[var(--line)] outline-none bg-[var(--paper)] text-[var(--ink)] focus:border-[rgba(169,22,22,0.42)] focus:shadow-[0_0_0_4px_rgba(169,22,22,0.08)]"
-                      placeholder="例如：012-345 6789"
-                      inputMode="tel"
-                      autoComplete="tel"
-                    />
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <span className="block text-xs font-extrabold text-[#7F1010]">电话</span>
+                      <span className="text-[#DC2626] font-extrabold">*</span>
+                    </div>
+                    <div className="relative">
+                      <input
+                        value={customerPhone}
+                        onChange={(e) => handleCustomerPhoneChange(e.target.value)}
+                        type="tel"
+                        maxLength={15}
+                        className={`w-full min-h-[48px] rounded-[var(--radius-lg)] px-3.5 py-3 border outline-none bg-[var(--paper)] text-[var(--ink)] transition-all ${
+                          fieldErrors.customerPhone
+                            ? "border-[var(--color-error)] focus:border-[var(--color-error)] focus:shadow-[var(--shadow-error)] bg-[#FEF2F2]"
+                            : "border-[var(--line)] focus:border-[rgba(169,22,22,0.42)] focus:shadow-[var(--shadow-focus)]"
+                        }`}
+                        placeholder="例如：012-345 6789"
+                        inputMode="tel"
+                        autoComplete="tel"
+                      />
+                      {fieldErrors.customerPhone && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[#DC2626] text-lg font-extrabold">⚠</div>
+                      )}
+                    </div>
+                    {fieldErrors.customerPhone && (
+                      <p className="mt-1 text-[#DC2626] text-xs font-extrabold">{fieldErrors.customerPhone}</p>
+                    )}
                   </label>
 
                   <div className="md:col-span-2">
@@ -645,12 +655,15 @@ export default function App() {
                   </div>
 
                   <label className="md:col-span-2">
-                    <span className="block text-xs font-extrabold text-[#7F1010] mb-1.5">整张订单备注</span>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="block text-xs font-extrabold text-[#7F1010]">整张订单备注</span>
+                      <span className="text-xs text-[var(--color-text-secondary)]">{orderNote.length}/200</span>
+                    </div>
                     <textarea
                       value={orderNote}
                       onChange={(e) => handleOrderNoteChange(e.target.value)}
                       maxLength={200}
-                      className="w-full min-h-[86px] rounded-2xl px-3.5 py-3 border border-[var(--line)] outline-none bg-[var(--paper)] text-[var(--ink)] resize-y leading-relaxed focus:border-[rgba(169,22,22,0.42)] focus:shadow-[0_0_0_4px_rgba(169,22,22,0.08)]"
+                      className="w-full min-h-[86px] rounded-[var(--radius-lg)] px-3.5 py-3 border border-[var(--line)] outline-none bg-[var(--paper)] text-[var(--ink)] resize-y leading-relaxed focus:border-[rgba(169,22,22,0.42)] focus:shadow-[var(--shadow-focus)] transition-all"
                       placeholder="例如：全部少辣、饮料少甜、分开打包"
                     />
                   </label>
@@ -658,9 +671,24 @@ export default function App() {
 
                 <div className="h-px bg-[var(--line)] my-3.5" />
 
+                {!isFormValid && (
+                  <div className="mb-3 p-3 rounded-[var(--radius-lg)] bg-[#FEF3C7] border border-[rgba(245,158,11,0.24)] flex items-start gap-2.5">
+                    <div className="text-lg pt-0.5">⚠️</div>
+                    <div>
+                      <p className="text-xs font-extrabold text-[#92400E]">表单信息不完整</p>
+                      <p className="text-xs text-[#B45309] mt-0.5">请填写标有 <span className="font-extrabold">*</span> 的必填项后提交订单</p>
+                    </div>
+                  </div>
+                )}
+
                 <button
                   onClick={handleGenerateOrder}
-                  className="w-full min-h-[48px] rounded-2xl px-4 py-3 bg-gradient-to-br from-[#A91616] to-[#7F1010] text-white font-extrabold shadow-[0_12px_24px_rgba(169,22,22,0.24)] active:scale-95 transition-transform"
+                  className={`w-full min-h-[48px] rounded-[var(--radius-lg)] px-4 py-3 font-extrabold shadow-[var(--shadow-brand-heavy)] active:scale-95 transition-all ${
+                    isFormValid
+                      ? "bg-gradient-to-br from-[var(--color-brand-red)] to-[var(--color-brand-red-dark)] text-white"
+                      : "bg-[#D1D5DB] text-[#6B7280] cursor-not-allowed opacity-60"
+                  }`}
+                  disabled={!isFormValid}
                 >
                   生成订单确认
                 </button>
@@ -682,13 +710,13 @@ export default function App() {
             </div>
 
             {cart.length === 0 ? (
-              <div className="rounded-[28px] bg-[var(--paper)] border border-[var(--line)] shadow-[var(--shadow-card)] py-[34px] px-[18px] text-center text-[#80685B] leading-[1.7]">
+              <div className="rounded-[var(--radius-3xl)] bg-[var(--paper)] border border-[var(--line)] shadow-[var(--shadow-card)] py-[34px] px-[18px] text-center text-[var(--color-text-secondary)] leading-[1.7]">
                 没有商品，无法生成订单。
               </div>
             ) : (
               <>
-                <div className="rounded-[28px] bg-[var(--paper)] border border-[var(--line)] shadow-[var(--shadow-card)] p-4">
-                  <div className="rounded-[18px] px-3.5 py-3 bg-[#fff1d4] text-[#7a4b00] border border-[rgba(201,154,52,0.28)] leading-relaxed text-[13px]">
+                <div className="rounded-[var(--radius-3xl)] bg-[var(--paper)] border border-[var(--line)] shadow-[var(--shadow-card)] p-4">
+                  <div className="rounded-[var(--radius-md)] px-3.5 py-3 bg-[#fff1d4] text-[#7a4b00] border border-[rgba(201,154,52,0.28)] leading-relaxed text-[13px]">
                     这是同一张顾客总订单，下面会拆成 {vendorGroups.length} 个档口分单。WhatsApp 无法网页自动一次发送给多人，顾客需要逐个点击发送。
                   </div>
 
@@ -709,7 +737,7 @@ export default function App() {
 
                   <button
                     onClick={handleCopyCustomerOrder}
-                    className="w-full mt-4 min-h-[48px] rounded-2xl px-4 py-3 bg-[#2A1712] text-[#fff6e8] font-extrabold active:scale-95 transition-transform"
+                    className="w-full mt-4 min-h-[48px] rounded-[var(--radius-lg)] px-4 py-3 bg-[#2A1712] text-[#fff6e8] font-extrabold active:scale-95 transition-transform"
                   >
                     复制顾客总订单
                   </button>
@@ -720,7 +748,7 @@ export default function App() {
                     disabled={!allVendorOrdersSent}
                     aria-disabled={!allVendorOrdersSent}
                     title={allVendorOrdersSent ? "全部档口已确认发送" : `仍未发送：${pendingVendorNames.join("、")}`}
-                    className={`w-full mt-2.5 min-h-[48px] rounded-2xl px-4 py-3 border font-extrabold transition-transform ${
+                    className={`w-full mt-2.5 min-h-[48px] rounded-[var(--radius-lg)] px-4 py-3 border font-extrabold transition-transform ${
                       allVendorOrdersSent
                         ? "bg-[rgba(255,253,248,0.55)] border-[var(--line)] text-[#7F1010] active:scale-95"
                         : "bg-[#f3eee8] border-[var(--line)] text-[#9d8b80] cursor-not-allowed"
@@ -730,9 +758,9 @@ export default function App() {
                   </button>
                 </div>
 
-                <div className="mt-4 rounded-[28px] bg-[var(--paper)] border border-[var(--line)] shadow-[var(--shadow-card)] p-4">
+                <div className="mt-4 rounded-[var(--radius-3xl)] bg-[var(--paper)] border border-[var(--line)] shadow-[var(--shadow-card)] p-4">
                   <h3 className="m-0 mb-3 text-[#7F1010] font-black">顾客总订单预览</h3>
-                  <pre className="whitespace-pre-wrap break-words bg-[#2A1712] text-[#fff5e4] rounded-[20px] p-3.5 leading-relaxed text-[13px] max-h-[360px] overflow-auto border border-white/10 m-0">
+                  <pre className="whitespace-pre-wrap break-words bg-[#2A1712] text-[#fff5e4] rounded-[var(--radius-lg)] p-3.5 leading-relaxed text-[13px] max-h-[360px] overflow-auto border border-white/10 m-0">
                     {customerOrderPreview}
                   </pre>
                 </div>
@@ -767,14 +795,9 @@ export default function App() {
 
       <BottomStickyCartBar itemCount={cartCount} total={cartTotal} onViewCart={() => navigate("cart")} />
 
-      <ToastNotification message={toast.message} show={toast.show} onHide={hideToast} />
+      <ToastNotification message={toast.message} show={toast.show} onHide={hideToast} type={toast.type} duration={toast.duration} />
 
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
+      {/* fadeIn animation has been migrated to src/styles/app.css */}
     </div>
   );
 }

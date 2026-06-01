@@ -4,9 +4,9 @@ interface PromoImageCardProps {
 
 export function PromoImageCard({ onViewCart }: PromoImageCardProps) {
   return (
-    <div className="mt-[18px] min-h-[230px] md:min-h-[280px] rounded-[var(--radius-card,24px)] overflow-hidden border border-[var(--line)] shadow-[var(--shadow-card)] promo-kopitiam bg-cover bg-center text-[#fff8eb] flex items-end p-6 md:p-[34px] relative">
+    <div className="mt-[18px] min-h-[230px] md:min-h-[280px] rounded-[var(--radius-xl)] overflow-hidden border border-[var(--line)] shadow-[var(--shadow-card)] promo-kopitiam bg-cover bg-center text-[#fff8eb] flex items-end p-6 md:p-[34px] relative">
       {/* Inner Border */}
-      <div className="absolute inset-3 border border-[rgba(255,231,178,0.20)] rounded-[calc(var(--radius-card,24px)-8px)] pointer-events-none" />
+      <div className="absolute inset-3 border border-[rgba(255,231,178,0.20)] rounded-[calc(var(--radius-xl)-8px)] pointer-events-none" />
 
       {/* Content */}
       <div className="relative z-10 max-w-[600px]">
@@ -24,7 +24,7 @@ export function PromoImageCard({ onViewCart }: PromoImageCardProps) {
 
         <button
           onClick={onViewCart}
-          className="min-h-[48px] rounded-[16px] px-4 py-[13px] bg-gradient-to-br from-[#A91616] to-[#7F1010] text-white font-extrabold flex items-center justify-center gap-2 shadow-[0_12px_24px_rgba(169,22,22,0.24)] active:translate-y-0.5 transition-transform"
+          className="min-h-[48px] rounded-[var(--radius-sm)] px-4 py-[13px] bg-gradient-to-br from-[var(--color-brand-red)] to-[var(--color-brand-red-dark)] text-white font-extrabold flex items-center justify-center gap-2 shadow-[var(--shadow-brand-heavy)] active:translate-y-0.5 transition-transform"
         >
           查看购物车
         </button>
