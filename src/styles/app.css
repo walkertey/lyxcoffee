@@ -88,11 +88,105 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --topbar-h: 74px;
   --cartbar-h: 76px;
+
+  /* Spacing System - 8pt Grid */
+  --space-0: 0px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Component-specific spacing */
+  --section-padding-x: var(--space-4);
+  --section-padding-y: var(--space-5);
+  --card-padding: var(--space-4);
+  --card-gap: var(--space-3);
+  --input-padding-x: var(--space-4);
+  --input-padding-y: var(--space-3);
+  --button-padding-x: var(--space-4);
+  --button-padding-y: var(--space-3);
+
+  /* Typography Scale */
+  --font-size-xs: 11px;
+  --font-size-sm: 13px;
+  --font-size-base: 15px;
+  --font-size-lg: 17px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 30px;
+  --font-size-4xl: 46px;
+
+  /* Font Weights */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+  --font-weight-black: 900;
+
+  /* Line Heights */
+  --line-height-tight: 1.25;
+  --line-height-snug: 1.375;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.625;
+  --line-height-loose: 1.75;
+
+  /* Semantic Typography - Display */
+  --text-display-size: clamp(46px, 12vw, 92px);
+  --text-display-weight: var(--font-weight-black);
+  --text-display-line-height: 1.02;
+
+  /* Semantic Typography - Headings */
+  --text-h1-size: clamp(30px, 8vw, 46px);
+  --text-h1-weight: var(--font-weight-black);
+  --text-h1-line-height: var(--line-height-tight);
+  --text-h2-size: clamp(24px, 7vw, 30px);
+  --text-h2-weight: var(--font-weight-black);
+  --text-h2-line-height: var(--line-height-tight);
+  --text-h3-size: var(--font-size-xl);
+  --text-h3-weight: var(--font-weight-bold);
+  --text-h3-line-height: var(--line-height-snug);
+  --text-h4-size: var(--font-size-lg);
+  --text-h4-weight: var(--font-weight-bold);
+  --text-h4-line-height: var(--line-height-snug);
+
+  /* Semantic Typography - Body */
+  --text-body-size: var(--font-size-base);
+  --text-body-weight: var(--font-weight-regular);
+  --text-body-line-height: var(--line-height-relaxed);
+  --text-body-sm-size: var(--font-size-sm);
+  --text-body-sm-weight: var(--font-weight-regular);
+  --text-body-sm-line-height: var(--line-height-relaxed);
+
+  /* Semantic Typography - UI Elements */
+  --text-button-size: var(--font-size-base);
+  --text-button-weight: var(--font-weight-extrabold);
+  --text-button-line-height: var(--line-height-normal);
+  --text-label-size: var(--font-size-xs);
+  --text-label-weight: var(--font-weight-extrabold);
+  --text-label-line-height: var(--line-height-normal);
+  --text-caption-size: var(--font-size-xs);
+  --text-caption-weight: var(--font-weight-regular);
+  --text-caption-line-height: var(--line-height-relaxed);
 }
 
 @media (min-width: 768px) {
   :root {
     --topbar-h: 82px;
+    --section-padding-x: var(--space-5);
+    --section-padding-y: var(--space-6);
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --section-padding-x: 30px;
   }
 }
 

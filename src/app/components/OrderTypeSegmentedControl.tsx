@@ -7,7 +7,7 @@ export function OrderTypeSegmentedControl({ selectedType, onSelectType }: OrderT
   const types = ["堂食", "打包", "自取"];
 
   return (
-    <div className="grid grid-cols-3 gap-2 bg-[#fff7ea] border border-[var(--line)] rounded-[var(--radius-md)] p-1.5">
+    <div className="grid grid-cols-3 gap-[var(--space-2)] bg-[#fff7ea] border border-[var(--line)] rounded-[var(--radius-md)] p-[var(--space-2)]">
       {types.map(type => (
         <button
           key={type}
